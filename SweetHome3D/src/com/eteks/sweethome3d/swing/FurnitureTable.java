@@ -921,6 +921,11 @@ public class FurnitureTable extends JTable implements View, Printable {
           case HEIGHT : 
             writer.write(sizeFormat.format(copiedPiece.getHeight()));
             break;
+          case VOLUME :
+            NumberFormat volumeFormat = NumberFormat.getNumberInstance();
+            volumeFormat.setMaximumFractionDigits(2);
+            writer.write(volumeFormat.format(copiedPiece.getVolume()));
+            break;
           case X : 
             writer.write(sizeFormat.format(copiedPiece.getX()));
             break;
@@ -1130,7 +1135,9 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "depthColumn");
         case HEIGHT : 
           return preferences.getLocalizedString(FurnitureTable.class, "heightColumn");
-        case X : 
+        case VOLUME :
+          return "Volume";
+        case X :
           return preferences.getLocalizedString(FurnitureTable.class, "xColumn");
         case Y :
           return preferences.getLocalizedString(FurnitureTable.class, "yColumn");
@@ -1178,6 +1185,8 @@ public class FurnitureTable extends JTable implements View, Printable {
         case Y :
         case ELEVATION : 
           return 50;
+        case VOLUME :
+          return 90;
         case ANGLE :
           return 35;        
         case LEVEL :
@@ -1215,6 +1224,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.DEPTH, preferences);
         case HEIGHT : 
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.HEIGHT, preferences);
+        case VOLUME :
+          return getVolumeRenderer();
         case X : 
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.X, preferences);
         case Y :
@@ -1463,6 +1474,33 @@ public class FurnitureTable extends JTable implements View, Printable {
         default :
           throw new IllegalArgumentException(property + " column not a price column");
       }
+    }
+
+    /**
+     * Returns a renderer that displays furniture volume in cubic centimeters.
+     */
+    private TableCellRenderer getVolumeRenderer() {
+      return new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+
+          String volume = null;
+
+          if (value != null) {
+            HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+            NumberFormat format = NumberFormat.getNumberInstance();
+            format.setMaximumFractionDigits(2);
+            volume = format.format(piece.getVolume()) + " cm³";
+          }
+
+          setHorizontalAlignment(JLabel.RIGHT);
+
+          return super.getTableCellRendererComponent(
+                  table, volume, isSelected, hasFocus, row, column);
+        }
+      };
     }
 
     /**
