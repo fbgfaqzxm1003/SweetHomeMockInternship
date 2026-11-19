@@ -2002,12 +2002,65 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     return strokeWidth;
   }
-  
+
+
+  @Override
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
+    if (pageIndex < 0) {
+      return NO_SUCH_PAGE;
+    }
+
+    Level originalLevel = this.home.getSelectedLevel();
+    try {
+      if (this.home.getLevels().isEmpty()) {
+        return printSelectedLevel(g, pageFormat, pageIndex);
+      }
+
+      int pageOffset = 0;
+      for (Level level : this.home.getLevels()) {
+        if (!level.isViewable()) {
+          continue;
+        }
+
+        this.home.setSelectedLevel(level);
+
+        int localPageIndex = pageIndex - pageOffset;
+        if (localPageIndex < 0) {
+          return NO_SUCH_PAGE;
+        }
+
+        // Count all printable pages for this level.
+        int levelPageCount = 0;
+        BufferedImage dummyImage =
+                new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        Graphics dummyGraphics = dummyImage.getGraphics();
+        try {
+          while (printSelectedLevel(dummyGraphics, pageFormat,
+                  levelPageCount) == PAGE_EXISTS) {
+            levelPageCount++;
+          }
+        } finally {
+          dummyGraphics.dispose();
+        }
+
+        if (localPageIndex < levelPageCount) {
+          return printSelectedLevel(g, pageFormat, localPageIndex);
+        }
+
+        pageOffset += levelPageCount;
+      }
+
+      return NO_SUCH_PAGE;
+    } finally {
+      this.home.setSelectedLevel(originalLevel);
+    }
+  }
+
   /**
    * Prints this component plan at the scale given in the home print attributes or at a scale 
    * that makes it fill <code>pageFormat</code> imageable size if this attribute is <code>null</code>.
    */
-  public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
+  private int printSelectedLevel(Graphics g, PageFormat pageFormat, int pageIndex) {
     List<Selectable> printedItems = getPaintedItems(); 
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null) {
